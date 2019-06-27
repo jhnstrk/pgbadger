@@ -14058,12 +14058,19 @@ sub parse_query
 					$cur_info{$t_pid}{query} =~ s/EXECUTE\s+$q_name\s*\((.*)\)[;]*$//is;
 					$cur_info{$t_pid}{parameters} = $1;
 					$prefix_vars{'t_query'} =~ s/\(PARAM\)/($cur_info{$t_pid}{parameters})/;
-					$cur_info{$t_pid}{query} = $prefix_vars{'t_query'} . ' - ' . $real_query;
-					$cur_info{$t_pid}{'bind'} = 1;
-					my @t_res = split(/[\s]*,[\s]*/, $cur_info{$t_pid}{parameters});
-					for (my $i = 0 ; $i <= $#t_res ; $i++) {
-						my $num = $i + 1;
-						$cur_info{$t_pid}{query} =~ s/\$$num\b/$t_res[$i]/s;
+					# JDS: Do not include the name of the statement in the query.
+					#	This merges prepared statements containing the same SQL, but discards the actual parameters.
+					if (1) {
+						$cur_info{$t_pid}{query} = $real_query;
+						$cur_info{$t_pid}{'bind'} = 1;
+					} else {
+						$cur_info{$t_pid}{query} = $prefix_vars{'t_query'} . ' - ' . $real_query;
+						$cur_info{$t_pid}{'bind'} = 1;
+						my @t_res = split(/[\s]*,[\s]*/, $cur_info{$t_pid}{parameters});
+						for (my $i = 0 ; $i <= $#t_res ; $i++) {
+							my $num = $i + 1;
+							$cur_info{$t_pid}{query} =~ s/\$$num\b/$t_res[$i]/s;
+						}
 					}
 				}
 				# go look at other params
